@@ -88,7 +88,7 @@ int main(){
 	}else{
 	  cout << "Conectado a servidor de tareas\n" << endl;
 	}
-	//while(1){
+	while(1){
 		// Aqui se envia un mensaje para el servidor
 		cout << "Escriba mensaje para el servidor : ";
 		cin >> message;
@@ -96,13 +96,11 @@ int main(){
 			cout << "no se pudo enviar  " << endl;
 			// break;
 		}
-		while(1){
-			cout << "Esperando resultado ... " << endl;
-			if(recv(*sock, server_reply, 1024,0)){
-				cout << "El resultado es : " << server_reply <<endl;
-			}
+		cout << "Esperando resultado ... " << endl;
+		if(recv(*sock, server_reply, 1024,0)){
+			cout << "El resultado es : " << server_reply <<endl;
 		}
-	//}
+	}
 	cin >> wait;
 	free(sock);
 

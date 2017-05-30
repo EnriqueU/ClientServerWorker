@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -10,7 +11,7 @@
 #define N 100000
 #define NT 100
 using namespace std;
-
+double result = 1234.0;
 //function que calcula la integral de la funcion identidad
 void integral(int id){
 	clock_t start = clock();
@@ -19,7 +20,7 @@ void integral(int id){
 		for(int j = 0 ; j < N ; j++)
 			;
 	}
-	//cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << "segundos " << endl;
+	cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << "segundos " << endl;
 }
 
 //estructura para enviar los argumentos de la funcion al hilo
@@ -41,7 +42,7 @@ int main(){
 	//estructuras para la coneccion de los servidores
 	struct sockaddr_in server, server2;
 	// mensaje de envio y mensaje de respuesta
-	char message[1024], server_reply[1024];
+	char message[1024], server_reply[1024], reply[1024];
 	//hilo para enviar el mensaje al servidor de latencia
 	pthread_t server2_thread;
 	// argumentos de la funcion para enviar al hilo
@@ -90,7 +91,7 @@ int main(){
 			cout << "Mensaje Recibido : " << server_reply <<endl;
 			for(int i = 0 ; i < NT ; i++){
 				//cout << "Thread :" << i << " Working " << endl;
-				job[i] = thread(integral,i);
+				job[i] = thread(integral,i+1);
 			}
 			for(int i=0; i < NT ; i++){
 				job[i].join();
@@ -101,8 +102,17 @@ int main(){
 		}
 
 		cout << "Enviando resultado al servidor : " << endl;
-		message[0] = 't';
-		if(send(sock, message, strlen(message),0) < 0){
+		std::ostringstream os;
+		os << result;
+		string str = os.str();
+		std::cout << "La suma es: " << result<< '\n';
+
+		str =  "t" + str;
+
+		for(int i =0;i<str.length();i++){
+			reply[i] = str.at(i);
+		}
+		if(send(sock, reply, strlen(reply),0) < 0){
 			cout << "no se pudo enviar  " << endl;
 			break;
 		}

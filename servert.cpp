@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -9,10 +10,10 @@
 #include <vector>
 
 using namespace std;
-
+double result = 0.0;
 #define N 100000
 #define n 100
-
+int count = 0;
 vector<int> sockets,socketst;
 
 int integral(int id){
@@ -22,19 +23,8 @@ int integral(int id){
 		for(int j = 0 ; j < N ; j++)
 			;
 	}
-	//cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << " segundos "<< endl;
+	cout <<  " thread 0" << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << " segundos "<< endl;
 	return 1;
-}
-
-int doJob(){
-	thread case1[n];
-	for(int i = 0 ; i < n ; i++){
-		//cout << "Thread :" << i << " Working " << endl;
-		case1[i] = thread(integral,i);
-	}
-	for(int i=0; i < n ; i++){
-		case1[i].join();
-	}
 }
 
 void check_connection(int* accept_client, int create_client, struct sockaddr_in client, int size){
@@ -44,7 +34,7 @@ void check_connection(int* accept_client, int create_client, struct sockaddr_in 
 void* connection(void* new_socket){
   int sock = *(int*)new_socket; // socket  del cliente
   int recv_msg; // controla si se recibe mensaje del cliente
-  char* message, client_message[1024], mensaje[1024];// mensaje a enviar y a recibir
+  char* message, client_message[1024], mensaje[1024], reply[1024];// mensaje a enviar y a recibir
 
   message = "Conectado al servidor"; //mensaje de coneccinon
 
@@ -72,18 +62,35 @@ void* connection(void* new_socket){
 					cout << "No se pudo enviar mensaje " << endl;
 					break;
 				}
-				thread gg(doJob);
+				thread gg(integral,1);
 				gg.join();
 		// mensaje reciido por el trabajador
 	}else if(client_message[0] == 't'){
   		cout << "trabajador: " << client_message << endl;
   		cout << "Mensaje del trabajador recibido: " ;
-		  client_message[0] = 'a';
+			string  str = client_message;
+			str = str.substr(1,str.length()-1);
 
-	    if(write(sockets[sockets.size() - 1],client_message,strlen(client_message)) < 0){
-	    	break;
-    	}
+			std::string res (str);
+  		std::string::size_type sz;     // alias of size_t
 
+			double r = std::stod (res,&sz);
+			result+=r;
+			count++;
+
+			if(count==(sockets.size()-1)){
+				std::ostringstream os;
+				os << result;
+				string str = os.str();
+
+				for(int i =0;i<str.length();i++){
+					reply[i] = str.at(i);
+				}
+				//std::cout << endl<< "La suma es: "<< result << '\n';
+				if(write(sockets[sockets.size()-1],reply,strlen(reply)) < 0){
+		    	break;
+	    	}
+			}
   	}
   }
   // cuando muere el cliente
@@ -138,13 +145,10 @@ int main(){
 	}
 
 	cout << "Enlace Creado" << endl;
-
 	// esuchar conecciones
 	listen(create_client, queueLimit);
-
 	// tamanio de la estructura
 	size = sizeof(struct sockaddr_in);
-
 	cout << " Tipo de trabajo : " ;
 	cin >> option;
 
@@ -153,10 +157,10 @@ int main(){
 			for(int i = 0 ; i < n ; i++){
 				cout << "Thread :" << i << " Working " << endl;
 				case1[i] = thread(integral,i);
-
-}			for(int i=0; i < n ; i++){
+			}
+			for(int i=0; i < n ; i++){
 				case1[i].join();
-				// cout << "Thread " << i << " finished job" << endl;
+				cout << "Thread " << i << " finished job" << endl;
 			}
 			break;
 		case '2':
@@ -168,14 +172,10 @@ int main(){
 			  *new_socket = accept_client;
 			  // crear hilo para el nuevo servidor
 			  sockets.push_back(accept_client);
-
-
 			  if(pthread_create(&client_thread,NULL,connection,(void*)new_socket)<0){
 			    perror( "No se pudo crear el hilo" );
 			    return 1;
 			  }
-
-
 			  cout << "Nueva coneccion cliente " << client_id++ << endl;
 			  //write(create_client, client_message,strlen(client_message));
 			}
@@ -189,7 +189,5 @@ int main(){
 		break;
 
 	}
-
-
 	return 0;
 }
