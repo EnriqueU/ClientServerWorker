@@ -74,24 +74,12 @@ int main(){
 	server.sin_port = htons(4000);
 
 
-	//Datos del servidor de latencia
-	server2.sin_addr.s_addr = inet_addr("127.0.0.1");
-	server2.sin_family = AF_INET;
-	server2.sin_port = htons(5000);
-
 	// Coneccion al sevidor de tareas
 	if (connect(sock,(struct sockaddr *)&server, sizeof(server)) < 0){
 		perror("Fallo la coneccion servidor de tareas");
 		return -1;
 	}else{
 	  cout << "Conectado a servidor de tareas" << endl;
-	}
-
-	//coneccion al servidor de latencia
-	if(connect(sock2,(struct sockaddr *)&server2,sizeof(server2)) <0){
-	  perror("Fallo la coneccion al servidor 2");
-	}else{
-	  cout << "Conectado al sevidor de latencia " << endl;
 	}
 
 	//recibir mensaje del servidor de tareas

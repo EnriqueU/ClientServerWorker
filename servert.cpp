@@ -29,7 +29,7 @@ int integral(int id){
 int doJob(){
 	thread case1[n];
 	for(int i = 0 ; i < n ; i++){
-		cout << "Thread :" << i << " Working " << endl;
+		//cout << "Thread :" << i << " Working " << endl;
 		case1[i] = thread(integral,i);
 	}
 	for(int i=0; i < n ; i++){
@@ -46,7 +46,6 @@ void* connection(void* new_socket){
   int recv_msg; // controla si se recibe mensaje del cliente
   char* message, client_message[1024], mensaje[1024];// mensaje a enviar y a recibir
 
-  sockets.push_back(sock);
   message = "Conectado al servidor"; //mensaje de coneccinon
 
 	//
@@ -62,14 +61,13 @@ void* connection(void* new_socket){
 			//  You can also assign directly to a string.
 			string  str = client_message;
 			str = str.substr(1,str.length()-1);
-			//std::string str = client_message.str();
-			//client_message = client_message.substr(1,client_message.length()-1);
-	    //client_message[0] = '1';
+
 			for(int i =0;i<str.length();i++){
 				mensaje[i] = str.at(i);
 			}
+			std::cout << "# sockets: "<<sockets.size() << '\n';
 			cout << "Enviando: " << mensaje<< endl;
-	    for(int i = 0; i < sockets.size() -2 ; i++)
+	    for(int i = 0; i < sockets.size()-1 ; i++)
 		    if(write(sockets[i],mensaje,strlen(mensaje)) < 0){
 					cout << "No se pudo enviar mensaje " << endl;
 					break;
@@ -87,64 +85,45 @@ void* connection(void* new_socket){
     	}
 
   	}
-
-
   }
   // cuando muere el cliente
   if(recv_msg == 0){
     cout << "Cliente Desconectado" << endl;
     fflush(stdout);
-  }
-  else if(recv_msg == -1){
+  } else if(recv_msg == -1){
     perror("fallo en recibir mensaje");
   }
-
   free(new_socket);
-
   return 0;
-
 }
 
 
 int main(){
 	clock_t start;
-
-
 	//opciones
 	char option;
-
 	// hilos caso1
 	thread case1[n];
-
 	// socket del client
 	int create_client, accept_client, read;
-
 	//id del cliente
 	int client_id = 0;
-
 	//tamanio de la estructura sockaddr_in
 	int size;
-
 	//puntero al socket para enviar al hilo
 	int *new_socket;
-
 	//mensaje del cliente
 	char client_message[1024];
-
 	// datos del servidor y cliente
 	struct sockaddr_in server,client;
-
 	//limite de la cola de espera
 	int queueLimit = 3;
-
 	//socket del cliente
 	create_client = socket(AF_INET, SOCK_STREAM, 0);
-
 	if(create_client == -1){
 		cout << "No se pudo crear el socket" << endl;
 		return -1;
 	}
-
 	cout << " Socket creado " << endl;
 
 	// datos del servidor
