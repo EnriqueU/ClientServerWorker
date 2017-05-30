@@ -14,12 +14,12 @@ using namespace std;
 //function que calcula la integral de la funcion identidad
 void integral(int id){
 	clock_t start = clock();
-	cout << "calculando ... " << endl;
+	//cout << "calculando ... " << endl;
 	for(int i = (id-1)*(N/NT) ; i < (id)*(N/NT) ; i++){
 		for(int j = 0 ; j < N ; j++)
 			;
 	}
-	cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << "segundos " << endl;
+	//cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << "segundos " << endl;
 }
 
 //estructura para enviar los argumentos de la funcion al hilo
@@ -31,49 +31,40 @@ struct t_args{
 
 int main(){
 	char wait;
-  	int sock, sock2; // socket para el servidor de tareas, latencia
-  	int server2_t; // status de la funcion pthread_create
-
-  	int client_id;
-
-  	unsigned int a = 0 , b = 2000000000; // limites de integracion
-
-	struct sockaddr_in server, server2;//estructuras para la coneccion de los servidores
-
+	// socket para el servidor de tareas, latencia
+	int sock, sock2;
+	// status de la funcion pthread_create
+	int server2_t;
+	int client_id;
+	// limites de integracion
+	unsigned int a = 0 , b = 2000000000;
+	//estructuras para la coneccion de los servidores
+	struct sockaddr_in server, server2;
 	// mensaje de envio y mensaje de respuesta
 	char message[1024], server_reply[1024];
-
 	//hilo para enviar el mensaje al servidor de latencia
 	pthread_t server2_thread;
-
 	// argumentos de la funcion para enviar al hilo
 	struct t_args socket_args;
-
 	//crear socket del servidor de tareas
 	sock = socket(AF_INET, SOCK_STREAM, 0);
-
 	//crear socket del servidor de latencia
 	sock2 = socket(AF_INET, SOCK_STREAM, 0);
-
 	thread job[NT];
 	// se asigna el valor del socket2
 	socket_args.socket = sock2;
 
-
 	if(sock == -1){
 		cout << "No se pudo crear el socket servidor tareas " << endl;
 		return -1;
-	}
-
-	else{
+	}else{
 	  cout << "Socket Servidor de Tareas Creado" << endl;
 	}
 
 	if(sock2 == -1){
 	  cout << "No se pudo crear el socket servidor de lateancia" << endl;
 	  return -1;
-	}
-	else{
+	}else{
 	  cout << "Socket Servidor de Latencia Creado" << endl;
 	}
 
@@ -92,18 +83,14 @@ int main(){
 	if (connect(sock,(struct sockaddr *)&server, sizeof(server)) < 0){
 		perror("Fallo la coneccion servidor de tareas");
 		return -1;
-	}
-
-	else{
+	}else{
 	  cout << "Conectado a servidor de tareas" << endl;
 	}
-
 
 	//coneccion al servidor de latencia
 	if(connect(sock2,(struct sockaddr *)&server2,sizeof(server2)) <0){
 	  perror("Fallo la coneccion al servidor 2");
-	}
-	else{
+	}else{
 	  cout << "Conectado al sevidor de latencia " << endl;
 	}
 

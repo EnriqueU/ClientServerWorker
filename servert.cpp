@@ -17,12 +17,12 @@ vector<int> sockets,socketst;
 
 int integral(int id){
 	clock_t start = clock();
-	cout << "calculando " << endl;
+	//cout << "calculando " << endl;
 	for(int i = (id-1)*(N/n) ; i < (id)*(N/n) ; i++){
 		for(int j = 0 ; j < N ; j++)
 			;
 	}
-	cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << " segundos "<< endl;
+	//cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << " segundos "<< endl;
 	return 1;
 }
 
@@ -44,7 +44,7 @@ void check_connection(int* accept_client, int create_client, struct sockaddr_in 
 void* connection(void* new_socket){
   int sock = *(int*)new_socket; // socket  del cliente
   int recv_msg; // controla si se recibe mensaje del cliente
-  char* message, client_message[1024];// mensaje a enviar y a recibir
+  char* message, client_message[1024], mensaje[1024];// mensaje a enviar y a recibir
 
   sockets.push_back(sock);
   message = "Conectado al servidor"; //mensaje de coneccinon
@@ -60,14 +60,17 @@ void* connection(void* new_socket){
 			cout << "Len "<< strlen(client_message) << endl;
 
 			//  You can also assign directly to a string.
-			str = str(client_message);
+			string  str = client_message;
+			str = str.substr(1,str.length()-1);
 			//std::string str = client_message.str();
 			//client_message = client_message.substr(1,client_message.length()-1);
 	    //client_message[0] = '1';
-			//strcpy(client_message,str2);
-
+			for(int i =0;i<str.length();i++){
+				mensaje[i] = str.at(i);
+			}
+			cout << "Enviando: " << mensaje<< endl;
 	    for(int i = 0; i < sockets.size() -2 ; i++)
-		    if(write(sockets[i],client_message,strlen(client_message)) < 0){
+		    if(write(sockets[i],mensaje,strlen(mensaje)) < 0){
 					cout << "No se pudo enviar mensaje " << endl;
 					break;
 				}
