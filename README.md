@@ -19,5 +19,7 @@ g++ client.cpp -o client -lpthread --std=c++11
 ## Run
 
 ./server (Un solo servidor)
+
 ./trabajador (La cantidad de veces como trabajadores se desee)
+
 ./client (Un clinte a la vez)
