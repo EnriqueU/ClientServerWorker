@@ -11,11 +11,13 @@ Clientes envían tareas simultáneamente a servidor,este reparte la tarea a los 
 ## Compile
 
 g++ server.cpp -o server -lpthread --std=c++11
+
 g++ trabajador.cpp -o trabajador -lpthread --std=c++11
+
 g++ client.cpp -o client -lpthread --std=c++11
 
 ## Run
 
-./server
-./trabajador
-./client
+./server (Un solo servidor)
+./trabajador (La cantidad de veces como trabajadores se desee)
+./client (Un clinte a la vez)
