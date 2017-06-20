@@ -14,7 +14,9 @@ double result = 0.0;
 #define N 100000
 #define n 100
 int count = 0;
-vector<int> sockets,socketst;
+int count2 = 0;
+vector<int> socketsT,socketsC;
+int t = 0;
 
 int integral(int id){
 	clock_t start = clock();
@@ -38,36 +40,41 @@ void* connection(void* new_socket){
 
   message = "Conectado al servidor"; //mensaje de coneccinon
 
-	//
+	// Semilla
+	srand(time(NULL));
+
   while(1){
   	if(recv(sock,client_message, 1024, 0)<0)
   		break;
 		// mensaje reciido por el cliente
   	if(client_message[0] == 'C'){
   		cout << "cliente : " << client_message << endl;
-  		cout << "Enviando mensaje al trabajadors " <<endl;
-			cout << "Len "<< strlen(client_message) << endl;
+  		cout << "Enviando mensaje al trabajadores " <<endl;
+			//cout << "Len "<< strlen(client_message) << endl;
 
 			//  You can also assign directly to a string.
 			string  str = client_message;
 			str = str.substr(1,str.length()-1);
 
+			// Cantidad de tareas
+			t = (rand()%5+1)*4;
+			printf("La Cantidad de Tareas Repartidas son: %d\n",t);
+
 			for(int i =0;i<str.length();i++){
 				mensaje[i] = str.at(i);
 			}
-			std::cout << "# sockets: "<<sockets.size() << '\n';
-			cout << "Enviando: " << mensaje<< endl;
-	    for(int i = 0; i < sockets.size()-1 ; i++)
-		    if(write(sockets[i],mensaje,strlen(mensaje)) < 0){
+
+	    for(int i = 0; i < t ; i++){
+				if(write(socketsT[i%4],mensaje,strlen(mensaje)) < 0){
 					cout << "No se pudo enviar mensaje " << endl;
 					break;
 				}
-				thread gg(integral,1);
-				gg.join();
-		// mensaje reciido por el trabajador
+			}
+				//thread gg(integral,100);
+				//gg.join();
+	// mensaje recibido por el trabajador
 	}else if(client_message[0] == 't'){
-  		cout << "trabajador: " << client_message << endl;
-  		cout << "Mensaje del trabajador recibido: " ;
+  		cout << "Mensaje del trabajador: " << client_message << endl;
 			string  str = client_message;
 			str = str.substr(1,str.length()-1);
 
@@ -78,7 +85,7 @@ void* connection(void* new_socket){
 			result+=r;
 			count++;
 
-			if(count==(sockets.size()-1)){
+			if(count==t){
 				std::ostringstream os;
 				os << result;
 				string str = os.str();
@@ -87,9 +94,11 @@ void* connection(void* new_socket){
 					reply[i] = str.at(i);
 				}
 				//std::cout << endl<< "La suma es: "<< result << '\n';
-				if(write(sockets[sockets.size()-1],reply,strlen(reply)) < 0){
+				if(write(socketsT[socketsT.size()-1],reply,strlen(reply)) < 0){
 		    	break;
 	    	}
+			}else{
+				printf("Hola mundo\n");
 			}
   	}
   }
@@ -171,7 +180,7 @@ int main(){
 			  new_socket = new int;
 			  *new_socket = accept_client;
 			  // crear hilo para el nuevo servidor
-			  sockets.push_back(accept_client);
+				socketsT.push_back(accept_client);
 			  if(pthread_create(&client_thread,NULL,connection,(void*)new_socket)<0){
 			    perror( "No se pudo crear el hilo" );
 			    return 1;

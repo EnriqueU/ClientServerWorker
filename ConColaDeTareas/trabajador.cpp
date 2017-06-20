@@ -6,12 +6,15 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <thread>
+#include <vector>
 
 //particiones 4e9
 #define N 100000
 #define NT 100
 using namespace std;
 double result = 1234.0;
+vector<int> cola;
+
 //function que calcula la integral de la funcion identidad
 void integral(int id){
 	clock_t start = clock();
@@ -29,6 +32,35 @@ struct t_args{
   const char message[11] = "Estoy vivo";
 };
 
+
+void runtask(thread job[],char reply[],int sock){
+	while(1){
+		while(!cola.empty()){
+			for(int i = 0 ; i < NT ; i++){
+				job[i] = thread(integral,i+1);
+			}
+			for(int i=0; i < NT ; i++){
+				job[i].join();
+			}
+			cout << "Enviando resultado al servidor : " << endl;
+			std::ostringstream os;
+			os << result;
+			string str = os.str();
+			std::cout << "La suma es: " << result<< '\n';
+
+			str =  "t" + str;
+
+			for(int i =0;i<str.length();i++){
+				reply[i] = str.at(i);
+			}
+			if(send(sock, reply, strlen(reply),0) < 0){
+				cout << "no se pudo enviar  " << endl;
+				break;
+			}
+			cola.pop_back();
+		}
+	}
+}
 
 int main(){
 	char wait;
@@ -82,41 +114,18 @@ int main(){
 	}else{
 	  cout << "Conectado a servidor de tareas" << endl;
 	}
-
+	thread run(runtask,job,reply,sock);
 	//recibir mensaje del servidor de tareas
 	while(1){
 		cout << "Esperando mensaje del servidor " << endl;
 		// reciiendo el mensaje del servidor
 		if(recv(sock, server_reply, 1024,0)){
 			cout << "Mensaje Recibido : " << server_reply <<endl;
-			for(int i = 0 ; i < NT ; i++){
-				//cout << "Thread :" << i << " Working " << endl;
-				job[i] = thread(integral,i+1);
-			}
-			for(int i=0; i < NT ; i++){
-				job[i].join();
-				// cout << "Thread " << i << " finished job" << endl;
-			}
+			// Llenando la cola de tareas
+			cola.push_back(100);
 		}else{
 			cout << "No se recibio mensaje del servidor" << endl;
 		}
-
-		cout << "Enviando resultado al servidor : " << endl;
-		std::ostringstream os;
-		os << result;
-		string str = os.str();
-		std::cout << "La suma es: " << result<< '\n';
-
-		str =  "t" + str;
-
-		for(int i =0;i<str.length();i++){
-			reply[i] = str.at(i);
-		}
-		if(send(sock, reply, strlen(reply),0) < 0){
-			cout << "no se pudo enviar  " << endl;
-			break;
-		}
-
 	}
 
 
