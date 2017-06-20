@@ -64,8 +64,8 @@ void* connection(void* new_socket){
 				mensaje[i] = str.at(i);
 			}
 
-	    for(int i = 0; i < t ; i++){
-				if(write(socketsT[i%4],mensaje,strlen(mensaje)) < 0){
+	    for(int i = 0; i < socketsT.size()-1 ; i++){
+				if(write(socketsT[i],mensaje,strlen(mensaje)) < 0){
 					cout << "No se pudo enviar mensaje " << endl;
 					break;
 				}
@@ -85,7 +85,7 @@ void* connection(void* new_socket){
 			result+=r;
 			count++;
 
-			if(count==t){
+			if(count==(socketsT.size()-1)*4){
 				std::ostringstream os;
 				os << result;
 				string str = os.str();
@@ -97,8 +97,6 @@ void* connection(void* new_socket){
 				if(write(socketsT[socketsT.size()-1],reply,strlen(reply)) < 0){
 		    	break;
 	    	}
-			}else{
-				printf("Hola mundo\n");
 			}
   	}
   }

@@ -123,6 +123,9 @@ int main(){
 			cout << "Mensaje Recibido : " << server_reply <<endl;
 			// Llenando la cola de tareas
 			cola.push_back(100);
+			cola.push_back(100);
+			cola.push_back(100);
+			cola.push_back(100);
 		}else{
 			cout << "No se recibio mensaje del servidor" << endl;
 		}
