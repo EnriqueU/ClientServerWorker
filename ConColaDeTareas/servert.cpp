@@ -11,23 +11,11 @@
 
 using namespace std;
 double result = 0.0;
-#define N 100000
-#define n 100
+
 int count = 0;
 int count2 = 0;
 vector<int> socketsT,socketsC;
 int t = 0;
-
-int integral(int id){
-	clock_t start = clock();
-	//cout << "calculando " << endl;
-	for(int i = (id-1)*(N/n) ; i < (id)*(N/n) ; i++){
-		for(int j = 0 ; j < N ; j++)
-			;
-	}
-	cout <<  " thread 0" << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << " segundos "<< endl;
-	return 1;
-}
 
 void check_connection(int* accept_client, int create_client, struct sockaddr_in client, int size){
 	*accept_client = accept(create_client, (struct sockaddr*) &client,(socklen_t*)&size);
@@ -56,10 +44,6 @@ void* connection(void* new_socket){
 			string  str = client_message;
 			str = str.substr(1,str.length()-1);
 
-			// Cantidad de tareas
-			t = (rand()%5+1)*4;
-			printf("La Cantidad de Tareas Repartidas son: %d\n",t);
-
 			for(int i =0;i<str.length();i++){
 				mensaje[i] = str.at(i);
 			}
@@ -70,8 +54,6 @@ void* connection(void* new_socket){
 					break;
 				}
 			}
-				//thread gg(integral,100);
-				//gg.join();
 	// mensaje recibido por el trabajador
 	}else if(client_message[0] == 't'){
   		cout << "Mensaje del trabajador: " << client_message << endl;
@@ -116,8 +98,6 @@ int main(){
 	clock_t start;
 	//opciones
 	char option;
-	// hilos caso1
-	thread case1[n];
 	// socket del client
 	int create_client, accept_client, read;
 	//id del cliente
@@ -156,45 +136,26 @@ int main(){
 	listen(create_client, queueLimit);
 	// tamanio de la estructura
 	size = sizeof(struct sockaddr_in);
-	cout << " Tipo de trabajo : " ;
-	cin >> option;
 
-	switch(option){
-		case '1':
-			for(int i = 0 ; i < n ; i++){
-				cout << "Thread :" << i << " Working " << endl;
-				case1[i] = thread(integral,i);
-			}
-			for(int i=0; i < n ; i++){
-				case1[i].join();
-				cout << "Thread " << i << " finished job" << endl;
-			}
-			break;
-		case '2':
-			// aceptar conecciones
-			while(accept_client = accept(create_client, (struct sockaddr*)&client,(socklen_t*)&size)){
-			  cout << "Se establecio coneccion con el servidor" << endl;
-			  pthread_t client_thread;
-			  new_socket = new int;
-			  *new_socket = accept_client;
-			  // crear hilo para el nuevo servidor
-				socketsT.push_back(accept_client);
-			  if(pthread_create(&client_thread,NULL,connection,(void*)new_socket)<0){
-			    perror( "No se pudo crear el hilo" );
-			    return 1;
-			  }
-			  cout << "Nueva coneccion cliente " << client_id++ << endl;
-			  //write(create_client, client_message,strlen(client_message));
-			}
+	// aceptar conecciones
+	while(accept_client = accept(create_client, (struct sockaddr*)&client,(socklen_t*)&size)){
+	  cout << "Se establecio coneccion con el servidor" << endl;
+	  pthread_t client_thread;
+	  new_socket = new int;
+	  *new_socket = accept_client;
+	  // crear hilo para el nuevo servidor
+		socketsT.push_back(accept_client);
+	  if(pthread_create(&client_thread,NULL,connection,(void*)new_socket)<0){
+	    perror( "No se pudo crear el hilo" );
+	    return 1;
+	  }
+	  cout << "Nueva coneccion cliente " << client_id++ << endl;
+	  //write(create_client, client_message,strlen(client_message));
+	}
 
-			if(accept_client < 0){
-				perror("FALLO EN ACEPTAR");
-				return -1;
-			}
-			break;
-		default:
-		break;
-
+	if(accept_client < 0){
+		perror("FALLO EN ACEPTAR");
+		return -1;
 	}
 	return 0;
 }

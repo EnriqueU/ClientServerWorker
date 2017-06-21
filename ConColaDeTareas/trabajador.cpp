@@ -9,19 +9,19 @@
 #include <vector>
 
 //particiones 4e9
-#define N 100000
-#define NT 100
+#define I 100000
+#define NH 64
 using namespace std;
-double result = 1234.0;
+double result = 0.0;
 vector<int> cola;
 
 //function que calcula la integral de la funcion identidad
 void integral(int id){
 	clock_t start = clock();
 	//cout << "calculando ... " << endl;
-	for(int i = (id-1)*(N/NT) ; i < (id)*(N/NT) ; i++){
-		for(int j = 0 ; j < N ; j++)
-			;
+	for(int i = (id-1)*(I/NH) ; i < (id)*(I/NH) ; i++){
+		for(int j = 0 ; j < I ; j++)
+			result = result + i;
 	}
 	cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << "segundos " << endl;
 }
@@ -35,18 +35,21 @@ struct t_args{
 
 void runtask(thread job[],char reply[],int sock){
 	while(1){
+		clock_t init = clock();
 		while(!cola.empty()){
-			for(int i = 0 ; i < NT ; i++){
+			//----------------------------
+			for(int i = 0 ; i < NH ; i++){
 				job[i] = thread(integral,i+1);
 			}
-			for(int i=0; i < NT ; i++){
+			for(int i=0; i < NH ; i++){
 				job[i].join();
 			}
+			//----------------------------
 			cout << "Enviando resultado al servidor : " << endl;
 			std::ostringstream os;
 			os << result;
 			string str = os.str();
-			std::cout << "La suma es: " << result<< '\n';
+			std::cout << "La suma es: " << result<< endl;
 
 			str =  "t" + str;
 
@@ -57,7 +60,11 @@ void runtask(thread job[],char reply[],int sock){
 				cout << "no se pudo enviar  " << endl;
 				break;
 			}
+			result = 0.0;
 			cola.pop_back();
+			if(cola.empty()){
+				cout << "\nEl tiempo utilizado fue de: "<<(clock()-init)/CLOCKS_PER_SEC <<endl;
+			}
 		}
 	}
 }
@@ -83,7 +90,7 @@ int main(){
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	//crear socket del servidor de latencia
 	sock2 = socket(AF_INET, SOCK_STREAM, 0);
-	thread job[NT];
+	thread job[NH];
 	// se asigna el valor del socket2
 	socket_args.socket = sock2;
 
