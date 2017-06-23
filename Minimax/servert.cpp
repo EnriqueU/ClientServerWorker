@@ -24,7 +24,7 @@ void check_connection(int* accept_client, int create_client, struct sockaddr_in 
 void* connection(void* new_socket){
   int sock = *(int*)new_socket; // socket  del cliente
   int recv_msg; // controla si se recibe mensaje del cliente
-  char* message, client_message[1024], mensaje[1024], reply[1024];// mensaje a enviar y a recibir
+  char* message, client_message[1000000], mensaje[1000000], reply[1000000];// mensaje a enviar y a recibir
 
   message = "Conectado al servidor"; //mensaje de coneccinon
 
@@ -32,7 +32,7 @@ void* connection(void* new_socket){
 	srand(time(NULL));
 
   while(1){
-  	if(recv(sock,client_message, 1024, 0)<0)
+  	if(recv(sock,client_message, 1000000, 0)<0)
   		break;
 		// mensaje reciido por el cliente
   	if(client_message[0] == 'C'){
@@ -64,7 +64,7 @@ void* connection(void* new_socket){
   		std::string::size_type sz;     // alias of size_t
 
 			double r = std::stod (res,&sz);
-			result+=r;
+			result=r;
 			count++;
 
 			if(count==(socketsT.size()-1)){
@@ -108,7 +108,7 @@ int main(){
 	//puntero al socket para enviar al hilo
 	int *new_socket;
 	//mensaje del cliente
-	char client_message[1024];
+	char client_message[1000000];
 	// datos del servidor y cliente
 	struct sockaddr_in server,client;
 	//limite de la cola de espera

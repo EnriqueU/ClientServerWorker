@@ -17,7 +17,7 @@ int main(){
 	//estructuras para la coneccion de los servidores
 	struct sockaddr_in server;
 	// mensaje de envio y mensaje de respuesta
-	char message[1024], server_reply[1024];
+	char message[1000000], server_reply[1000000];
 	//crear socket del servidor de tareas
 	sock = new int;
 	*sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -50,7 +50,7 @@ int main(){
 			// break;
 		}
 		cout << "Esperando resultado ... " << endl;
-		if(recv(*sock, server_reply, 1024,0)){
+		if(recv(*sock, server_reply, 1000000,0)){
 			cout << "El resultado es : " << server_reply <<endl;
 		}
 	}
