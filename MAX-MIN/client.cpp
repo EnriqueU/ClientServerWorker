@@ -52,10 +52,10 @@ int main(){
 			cout << "no se pudo enviar  " << endl;
 			// break;
 		}
-		cout << "Esperando resultado ... " << endl;
+		/*cout << "Esperando resultado ... " << endl;
 		if(recv(*sock, server_reply, 1024,0)){
 			cout << "El resultado es : " << server_reply <<endl;
-		}
+		}*/
 	}
 	cin >> wait;
 	free(sock);

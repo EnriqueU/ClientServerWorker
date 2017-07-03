@@ -6,12 +6,15 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <thread>
+#include <vector>
 
 //particiones 4e9
-#define I 100000
+#define I 1000
 #define NH 100
+#define N 10
 using namespace std;
 double result = 1234.0;
+vector<int> tareas;
 //function que calcula la integral de la funcion identidad
 //function que calcula la integral de la funcion identidad
 int integral(int id){
@@ -80,35 +83,31 @@ int main(){
 		// reciiendo el mensaje del servidor
 		if(recv(sock, server_reply, 1024,0)){
 			cout << "Mensaje Recibido : " << server_reply <<endl;
-			for(int i = 0 ; i < NH ; i++){
-				//cout << "Thread :" << i << " Working " << endl;
-				job[i] = thread(integral,i+1);
-			}
-			for(int i=0; i < NH ; i++){
-				job[i].join();
-				// cout << "Thread " << i << " finished job" << endl;
+			for(int l=0;l<N;l++)
+				tareas.push_back(100);
+
+			while(!tareas.empty()){
+				for(int i = 0 ; i < NH ; i++){
+					job[i] = thread(integral,i+1);
+				}
+				for(int i=0; i < NH ; i++){
+					job[i].join();
+				}
+				cout << "Enviando resultado al servidor : " << endl;
+				string str =  server_reply;
+				str = "t" + str;
+
+				for(int i =0;i<str.length();i++){
+					reply[i] = str.at(i);
+				}
+				if(send(sock, reply, strlen(reply),0) < 0){
+					cout << "no se pudo enviar  " << endl;
+					break;
+				}
+				tareas.pop_back();
 			}
 		}else{
 			cout << "No se recibio mensaje del servidor" << endl;
 		}
-
-		cout << "Enviando resultado al servidor : " << endl;
-		std::ostringstream os;
-		os << result;
-		string str = os.str();
-		std::cout << "La suma es: " << result<< '\n';
-
-		str =  "t" + str;
-
-		for(int i =0;i<str.length();i++){
-			reply[i] = str.at(i);
-		}
-		if(send(sock, reply, strlen(reply),0) < 0){
-			cout << "no se pudo enviar  " << endl;
-			break;
-		}
-
 	}
-
-
 }

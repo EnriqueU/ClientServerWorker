@@ -11,10 +11,11 @@
 
 using namespace std;
 double result = 0.0;
-#define I 100000
-#define NH 100
-int count = 0;
-vector<int> sockets,socketst;
+#define I 1000
+#define NH 1
+#define N 10
+int count = 0,count2 = 0;
+vector<int> sockets;
 
 //function que calcula la integral de la funcion identidad
 int integral(int id){
@@ -36,7 +37,7 @@ void* connection(void* new_socket){
   int sock = *(int*)new_socket; // socket  del cliente
   int recv_msg; // controla si se recibe mensaje del cliente
   char* message, client_message[1024], mensaje[1024], reply[1024];// mensaje a enviar y a recibir
-
+	double times[N][5];
   message = "Conectado al servidor"; //mensaje de coneccinon
 
 	//
@@ -49,33 +50,44 @@ void* connection(void* new_socket){
   		cout << "Enviando mensaje al trabajadors " <<endl;
 
 			//  You can also assign directly to a string.
-			string  str = client_message;
-			str = str.substr(1,str.length()-1);
-
-			for(int i =0;i<str.length();i++){
-				mensaje[i] = str.at(i);
-			}
-	    for(int i = 0; i < sockets.size()-1 ; i++)
-		    if(write(sockets[i],mensaje,strlen(mensaje)) < 0){
+			/*string  str = client_message;
+			str = str.substr(1,str.length()-1); // Nos quedamos con solo el número
+			for(int i =1;i<=str.length();i++)
+				mensaje[i] = str.at(i-1);*/
+	    for(int i = 0; i < sockets.size()-1 ; i++){
+				int ind = i+1;
+				char n = (char)(ind+48);
+				mensaje[0] = n;
+				if(write(sockets[i],mensaje,strlen(mensaje)) < 0){
 					cout << "No se pudo enviar mensaje " << endl;
 					break;
 				}
+			}
 			thread gg(integral,1);
 			gg.join();
 		// mensaje reciido por el trabajador
 	}else if(client_message[0] == 't'){
   		cout << "Mensaje del trabajador recibido: " << client_message << endl;
 			string  str = client_message;
-			str = str.substr(1,str.length()-1);
+			str = str.substr(1,2);
+			int in = atoi(str.c_str()); // Indice de que llego primero
+			if(count2%(sockets.size()-1)==0){
+				cout << "Valor de count" << count << endl;
+				cout << "Indice es: " << in<<endl;
+				times[count][in]=1;
+				count++;
+			}
+			count2++;
+			if(count2==N*(sockets.size()-1)){
+				for (int i = 0; i < N; i++) {
+					for (int j = 0; j < 5; j++) {
+						printf("%6.2f", times[i][j]);
+					}
+					printf("\n");
+				}
+			}
 
-			std::string res (str);
-  		std::string::size_type sz;     // alias of size_t
-
-			double r = std::stod (res,&sz);
-			result+=r;
-			count++;
-
-			if(count==(sockets.size()-1)){
+			/*if(count==N){
 				std::ostringstream os;
 				os << result;
 				string str = os.str();
@@ -87,7 +99,7 @@ void* connection(void* new_socket){
 				if(write(sockets[sockets.size()-1],reply,strlen(reply)) < 0){
 		    	break;
 	    	}
-			}
+			}*/
   	}
   }
   // cuando muere el cliente
