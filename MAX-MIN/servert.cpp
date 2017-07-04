@@ -11,17 +11,17 @@
 
 using namespace std;
 double result = 0.0;
-#define I 1000
-#define NH 1
+#define I 100000
+#define NH 100
 #define N 10
 int count = 0,count2 = 0;
 vector<int> sockets;
-double times[N][30];
+double times[N][60]; // hasta 60 tareas
+int band=0;
 
-//function que calcula la integral de la funcion identidad
+//funcion que calcula la integral de la funcion identidad
 int integral(int id){
 	clock_t start = clock();
-	//cout << "calculando ... " << endl;
 	for(int i = (id-1)*(I/NH) ; i < (id)*(I/NH) ; i++){
 		for(int j = 0 ; j < I ; j++)
 			result = result + i;
@@ -30,9 +30,55 @@ int integral(int id){
 	return 1;
 }
 
-void matriz(int x, int y){
-	times[x][y]=1;
+void matriz(int x, int y,int v){
+	times[x][y] = v;
 }
+
+/*void sendTask(){
+	while(1){
+		if(band==1){
+			// Ordenamiento
+			double temp;
+			for(int i=0;i<N-1;i++){
+				for(int j=i+1;j<N;j++){
+					if(times[j][0]>times[i][0]){
+						for(int k=1;k<sockets.size();k++){
+							temp=times[j][k];
+							times[j][k]=times[i][k];
+							times[i][k]=temp;
+						}
+					}
+				}
+			}
+			char mensaje[1024];
+			for(int i=0;i<N;i++){
+				for(int j=1;j<sockets.size();j++){
+					if(times[i][j]==1){
+						int ind = j+1;
+						if(ind>9){
+							int a = ind/10;
+							int b = ind - (10*a);
+							char na = (char)(a+48);
+							char nb = (char)(b+48);
+							mensaje[0] = na;
+							mensaje[1] = nb;
+						}else{
+							char n = (char)(ind+48);
+							mensaje[0] = n;
+						}
+						if(write(sockets[j],mensaje,strlen(mensaje)) < 0){
+							cout << "No se pudo enviar mensaje " << endl;
+							break;
+						}
+					}
+				}
+			}
+
+			band=2;
+			break;
+		}
+	}
+}*/
 
 void check_connection(int* accept_client, int create_client, struct sockaddr_in client, int size){
 	*accept_client = accept(create_client, (struct sockaddr*) &client,(socklen_t*)&size);
@@ -53,58 +99,64 @@ void* connection(void* new_socket){
   		cout << "cliente : " << client_message << endl;
   		cout << "Enviando mensaje al trabajadors " <<endl;
 
-			//  You can also assign directly to a string.
-			/*string  str = client_message;
-			str = str.substr(1,str.length()-1); // Nos quedamos con solo el número
-			for(int i =1;i<=str.length();i++)
-				mensaje[i] = str.at(i-1);*/
+			// calculando el tiempo esperado
+			for(int k=0 ; k<N ; k++){
+				clock_t s = clock();
+				thread esp(integral,k+1);
+				esp.join();
+				clock_t f = clock();
+				thread esperado(matriz , k , 0 , (f-s)/CLOCKS_PER_SEC);
+				esperado.join();
+			}
+
 	    for(int i = 0; i < sockets.size()-1 ; i++){
 				int ind = i+1;
-				char n = (char)(ind+48);
-				mensaje[0] = n;
+				if(ind>9){
+					int a = ind/10;
+					int b = ind - (10*a);
+					char na = (char)(a+48);
+					char nb = (char)(b+48);
+					mensaje[0] = na;
+					mensaje[1] = nb;
+				}else{
+					char n = (char)(ind+48);
+					mensaje[0] = n;
+				}
 				if(write(sockets[i],mensaje,strlen(mensaje)) < 0){
 					cout << "No se pudo enviar mensaje " << endl;
 					break;
 				}
 			}
-			thread gg(integral,1);
-			gg.join();
+			//thread send();
+			//send.join()
 		// mensaje reciido por el trabajador
-	}else if(client_message[0] == 't'){
-  		cout << "Mensaje del trabajador recibido: " << client_message << endl;
-			string  str = client_message;
-			str = str.substr(1,2);
-			int in = atoi(str.c_str()); // Indice de que llego primero
-			if(count2%(sockets.size()-1)==0){
-				thread init(matriz,count,in);
-				init.join();
-				count++;
-			}
-			count2++;
-			if(count2==N*(sockets.size()-1)){
-				for (int i = 0; i < N; i++) {
-					for (int j = 1; j < sockets.size(); j++) {
-						printf("%6.2f", times[i][j]);
+		}else if(client_message[0] == 't'){
+			if(band==0){
+				cout << "Mensaje del trabajador recibido: " << client_message << endl;
+				string  str = client_message;
+				str = str.substr(1,strlen(client_message)-1);
+				int in = atoi(str.c_str()); // Indice de que llego primero
+				if(count2%(sockets.size()-1)==0){
+					cout << "[Tarea][Worker]: ["<<count<<"]["<<in<<"]" << endl;
+					thread init(matriz,count,in,1);
+					init.join();
+					count++;
+				}
+				count2++;
+				if(count2==N*(sockets.size()-1)){
+					for (int i = 0; i < N; i++) {
+						for (int j = 1; j < sockets.size(); j++) {
+							printf("%6.2f", times[i][j]);
+						}
+						printf("\n");
 					}
-					printf("\n");
+					band=1;
 				}
+			}else if(band=2){
+				cout << "Mensaje del trabajador recibido: " << client_message << endl;
 			}
-
-			/*if(count==N){
-				std::ostringstream os;
-				os << result;
-				string str = os.str();
-
-				for(int i =0;i<str.length();i++){
-					reply[i] = str.at(i);
-				}
-				//std::cout << endl<< "La suma es: "<< result << '\n';
-				if(write(sockets[sockets.size()-1],reply,strlen(reply)) < 0){
-		    	break;
-	    	}
-			}*/
   	}
-  }
+	}
   // cuando muere el cliente
   if(recv_msg == 0){
     cout << "Cliente Desconectado" << endl;
@@ -118,9 +170,6 @@ void* connection(void* new_socket){
 
 
 int main(){
-	clock_t start;
-	//opciones
-	char option;
 	// socket del client
 	int create_client, accept_client, read;
 	//id del cliente
@@ -160,6 +209,8 @@ int main(){
 	// tamanio de la estructura
 	size = sizeof(struct sockaddr_in);
 
+	//thread send(sendTask);
+	//send.join();
 	// aceptar conecciones
 	while(accept_client = accept(create_client, (struct sockaddr*)&client,(socklen_t*)&size)){
 		cout << "Se establecio coneccion con el servidor" << endl;
@@ -173,7 +224,6 @@ int main(){
 			return 1;
 		}
 		cout << "Nueva coneccion cliente " << client_id++ << endl;
-		//write(create_client, client_message,strlen(client_message));
 	}
 
 	if(accept_client < 0){

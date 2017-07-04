@@ -8,15 +8,14 @@
 #include <thread>
 #include <vector>
 
-//particiones 4e9
-#define I 1000
+#define I 100000
 #define NH 100
 #define N 10
 using namespace std;
 double result = 1234.0;
 vector<int> tareas;
-//function que calcula la integral de la funcion identidad
-//function que calcula la integral de la funcion identidad
+
+//funcion que calcula la integral de la funcion identidad
 int integral(int id){
 	clock_t start = clock();
 	//cout << "calculando ... " << endl;
