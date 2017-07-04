@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string.h>
 #include <sys/socket.h>
@@ -15,8 +14,6 @@ int main(){
 	int *sock;
 	// status de la funcion pthread_create
 	int client_id;
-	// limites de integracion
-	unsigned int a = 0 , b = 2000000000;
 	//estructuras para la coneccion de los servidores
 	struct sockaddr_in server, server2;
 	// mensaje de envio y mensaje de respuesta

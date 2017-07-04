@@ -8,15 +8,15 @@
 #include <pthread.h>
 #include <thread>
 #include <vector>
-
 using namespace std;
-double result = 0.0;
-#define I 100000
-#define NH 100
-#define N 10
+
+double result = 0.0;// resultado de la suma de la integral
+int I = 10000;// Intervalo de integracion [0,I]
+int NH = 100;// Números de hilos
+int N = 10;// Números de tareas
 int count = 0,count2 = 0;
-vector<int> sockets;
-double times[N][60]; // hasta 60 tareas
+vector<int> sockets;// sockets de workers y clientes
+double times[100][100]; // Matriz de tiempo
 int band=0;
 
 //funcion que calcula la integral de la funcion identidad
@@ -26,7 +26,8 @@ int integral(int id){
 		for(int j = 0 ; j < I ; j++)
 			result = result + i;
 	}
-	cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << "segundos " << endl;
+	printf("Thread %d terminó en %.7f segundos\n", id, (clock() - start)/CLOCKS_PER_SEC);
+	//cout <<  " thread " << id << " termino en  " << (clock() - start)/CLOCKS_PER_SEC  << "segundos " << endl;
 	return 1;
 }
 
@@ -34,51 +35,46 @@ void matriz(int x, int y,int v){
 	times[x][y] = v;
 }
 
-/*void sendTask(){
-	while(1){
-		if(band==1){
-			// Ordenamiento
-			double temp;
-			for(int i=0;i<N-1;i++){
-				for(int j=i+1;j<N;j++){
-					if(times[j][0]>times[i][0]){
-						for(int k=1;k<sockets.size();k++){
-							temp=times[j][k];
-							times[j][k]=times[i][k];
-							times[i][k]=temp;
-						}
-					}
+void sendTask(){
+	// Ordenamiento por la columna de tiempo esperado
+	double temp;
+	for(int i=0;i<N-1;i++){
+		for(int j=i+1;j<N;j++){
+			if(times[j][0]>times[i][0]){
+				for(int k=1;k<sockets.size();k++){
+					temp=times[j][k];
+					times[j][k]=times[i][k];
+					times[i][k]=temp;
 				}
 			}
-			char mensaje[1024];
-			for(int i=0;i<N;i++){
-				for(int j=1;j<sockets.size();j++){
-					if(times[i][j]==1){
-						int ind = j+1;
-						if(ind>9){
-							int a = ind/10;
-							int b = ind - (10*a);
-							char na = (char)(a+48);
-							char nb = (char)(b+48);
-							mensaje[0] = na;
-							mensaje[1] = nb;
-						}else{
-							char n = (char)(ind+48);
-							mensaje[0] = n;
-						}
-						if(write(sockets[j],mensaje,strlen(mensaje)) < 0){
-							cout << "No se pudo enviar mensaje " << endl;
-							break;
-						}
-					}
-				}
-			}
-
-			band=2;
-			break;
 		}
 	}
-}*/
+	// Envia tareas  a los worker segun matriz de tiempos
+	char mensaje[1024];
+	for(int i=0;i<N;i++){
+		for(int j=1;j<sockets.size();j++){
+			if(times[i][j]==1){
+				int ind = j+1;
+				if(ind>9){
+					int a = ind/10;
+					int b = ind - (10*a);
+					char na = (char)(a+48);
+					char nb = (char)(b+48);
+					mensaje[0] = na;
+					mensaje[1] = nb;
+				}else{
+					char n = (char)(ind+48);
+					mensaje[0] = n;
+				}
+				if(write(sockets[j],mensaje,strlen(mensaje)) < 0){
+					cout << "No se pudo enviar mensaje " << endl;
+					break;
+				}
+			}
+		}
+	}
+	band=1;
+}
 
 void check_connection(int* accept_client, int create_client, struct sockaddr_in client, int size){
 	*accept_client = accept(create_client, (struct sockaddr*) &client,(socklen_t*)&size);
@@ -90,15 +86,14 @@ void* connection(void* new_socket){
   char* message, client_message[1024], mensaje[1024], reply[1024];// mensaje a enviar y a recibir
   message = "Conectado al servidor"; //mensaje de coneccinon
 
-	//
   while(1){
   	if(recv(sock,client_message, 1024, 0)<0)
   		break;
 		// mensaje reciido por el cliente
   	if(client_message[0] == 'C'){
-  		cout << "cliente : " << client_message << endl;
+  		cout << "Cliente : " << client_message << endl;
   		cout << "Enviando mensaje al trabajadors " <<endl;
-
+			//------------------------------------------------------------------------
 			// calculando el tiempo esperado
 			for(int k=0 ; k<N ; k++){
 				clock_t s = clock();
@@ -108,7 +103,7 @@ void* connection(void* new_socket){
 				thread esperado(matriz , k , 0 , (f-s)/CLOCKS_PER_SEC);
 				esperado.join();
 			}
-
+			// Se calcula cuales son los mejores workes para cada tarea
 	    for(int i = 0; i < sockets.size()-1 ; i++){
 				int ind = i+1;
 				if(ind>9){
@@ -127,11 +122,10 @@ void* connection(void* new_socket){
 					break;
 				}
 			}
-			//thread send();
-			//send.join()
+			//------------------------------------------------------------------------
 		// mensaje reciido por el trabajador
 		}else if(client_message[0] == 't'){
-			if(band==0){
+			if(band==0){ // Cuando recibe por primera vez de los workers
 				cout << "Mensaje del trabajador recibido: " << client_message << endl;
 				string  str = client_message;
 				str = str.substr(1,strlen(client_message)-1);
@@ -150,9 +144,9 @@ void* connection(void* new_socket){
 						}
 						printf("\n");
 					}
-					band=1;
+					sendTask();
 				}
-			}else if(band=2){
+			}else if(band=1){ // Cuando recibe una vez obtenida la matriz
 				cout << "Mensaje del trabajador recibido: " << client_message << endl;
 			}
   	}
@@ -189,8 +183,9 @@ int main(){
 	if(create_client == -1){
 		cout << "No se pudo crear el socket" << endl;
 		return -1;
+	}else{
+		cout << "Socket creado " << endl;
 	}
-	cout << " Socket creado " << endl;
 
 	// datos del servidor
 	server.sin_addr.s_addr = inet_addr("127.0.0.1");
