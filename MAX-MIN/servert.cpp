@@ -16,6 +16,7 @@ double result = 0.0;
 #define N 10
 int count = 0,count2 = 0;
 vector<int> sockets;
+double times[N][30];
 
 //function que calcula la integral de la funcion identidad
 int integral(int id){
@@ -29,6 +30,10 @@ int integral(int id){
 	return 1;
 }
 
+void matriz(int x, int y){
+	times[x][y]=1;
+}
+
 void check_connection(int* accept_client, int create_client, struct sockaddr_in client, int size){
 	*accept_client = accept(create_client, (struct sockaddr*) &client,(socklen_t*)&size);
 }
@@ -37,7 +42,6 @@ void* connection(void* new_socket){
   int sock = *(int*)new_socket; // socket  del cliente
   int recv_msg; // controla si se recibe mensaje del cliente
   char* message, client_message[1024], mensaje[1024], reply[1024];// mensaje a enviar y a recibir
-	double times[N][5];
   message = "Conectado al servidor"; //mensaje de coneccinon
 
 	//
@@ -72,15 +76,14 @@ void* connection(void* new_socket){
 			str = str.substr(1,2);
 			int in = atoi(str.c_str()); // Indice de que llego primero
 			if(count2%(sockets.size()-1)==0){
-				cout << "Valor de count" << count << endl;
-				cout << "Indice es: " << in<<endl;
-				times[count][in]=1;
+				thread init(matriz,count,in);
+				init.join();
 				count++;
 			}
 			count2++;
 			if(count2==N*(sockets.size()-1)){
 				for (int i = 0; i < N; i++) {
-					for (int j = 0; j < 5; j++) {
+					for (int j = 1; j < sockets.size(); j++) {
 						printf("%6.2f", times[i][j]);
 					}
 					printf("\n");
